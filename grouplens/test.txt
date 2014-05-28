@@ -1,0 +1,2 @@
+Deleted hdfs://localhost:9000/user/hive/warehouse/u_data
+100000
