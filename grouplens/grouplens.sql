@@ -1,39 +1,28 @@
--- create table textlines(text string);    
+DROP TABLE users;
 
--- load data local inpath 'C:\work\ClearPoint\Data20\data\words.txt' overwrite into table textlines;
-
--- create table words(word string);
-
--- insert overwrite table words select explode(split(text, '[ \t]+')) word from textlines;
-
--- select word, count(*) from words group by word;
-
-CREATE TABLE u_data (
+CREATE TABLE users (
   userid INT,
-  movieid INT,
-  rating INT,
-  unixtime STRING)
+  age INT,
+  gender STRING,
+  occupation STRING,
+  zipCode STRING)
 ROW FORMAT DELIMITED
-FIELDS TERMINATED BY '\t'
+FIELDS TERMINATED BY '|'
 STORED AS TEXTFILE;
 
-LOAD DATA LOCAL INPATH './data/u.data' OVERWRITE INTO TABLE u_data;
+LOAD DATA LOCAL INPATH './data/u.user' OVERWRITE INTO TABLE users;
 
-SELECT COUNT(*) FROM u_data;
+INSERT OVERWRITE LOCAL DIRECTORY 'hiveout/stats'
+row format delimited
+FIELDS TERMINATED BY ' '
+SELECT COUNT(*), AVG(age), SUM(age) FROM users;
 
--- users = LOAD '../grouplens/u.user' USING PigStorage('|') AS (userId,age,gender,occupation,zipCode);
+INSERT OVERWRITE LOCAL DIRECTORY 'hiveout/genderStats'
+row format delimited
+FIELDS TERMINATED BY ' '
+SELECT gender, COUNT(*), AVG(age) FROM users GROUP BY gender;
 
--- allUsers = GROUP users ALL;
--- stats = FOREACH allUsers GENERATE COUNT(users), AVG(users.age), SUM(users.age);
-
--- byGender = GROUP users BY gender;
--- genderStats = FOREACH byGender GENERATE group, COUNT(users), AVG(users.age);
-
--- programmers = FILTER users BY occupation == 'programmer';
--- progsByAge = GROUP programmers BY age;
--- progCountsByAge = FOREACH progsByAge GENERATE group AS age, COUNT(programmers) as NumProgs;
--- progsCountsByAgeSorted = ORDER progCountsByAge BY age ASC;
-
--- STORE stats INTO 'output/stats' USINg PigStorage('\t');
--- STORE genderStats INTO 'output/genderStats' USING PigStorage('\t');
--- STORE progsCountsByAgeSorted INTO 'output/progsCountsByAgeSorted' USING PigStorage('\t');
+INSERT OVERWRITE LOCAL DIRECTORY 'hiveout/progsCountsByAgeSorted'
+row format delimited
+FIELDS TERMINATED BY ' '
+SELECT age, COUNT(*) FROM users WHERE occupation == 'programmer' GROUP BY age ORDER BY age ASC;
